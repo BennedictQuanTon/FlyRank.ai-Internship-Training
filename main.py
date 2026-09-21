@@ -175,29 +175,51 @@ def update_task(task_id: int, task_in: TaskUpdate):
             detail="Task title cannot be empty or blank"
         )
 
-    for task in tasks_db:
-        if task["id"] == task_id:
-            if task_in.title is not None:
-                task["title"] = task_in.title.strip()
-            if task_in.done is not None:
-                task["done"] = task_in.done
-            return task
+    conn = get_db_connection()
+    try:
+        cursor = conn.cursor()
+        cursor.execute("SELECT id, title, done FROM tasks WHERE id = ?", (task_id,))
+        row = cursor.fetchone()
+        if not row:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Task {task_id} not found"
+            )
 
-    raise HTTPException(
-        status_code=status.HTTP_404_NOT_FOUND,
-        detail=f"Task {task_id} not found"
-    )
+        updated_title = task_in.title.strip() if task_in.title is not None else row["title"]
+        updated_done = (1 if task_in.done else 0) if task_in.done is not None else row["done"]
+
+        with conn:
+            conn.execute(
+                "UPDATE tasks SET title = ?, done = ? WHERE id = ?",
+                (updated_title, updated_done, task_id)
+            )
+
+        return {
+            "id": task_id,
+            "title": updated_title,
+            "done": bool(updated_done)
+        }
+    finally:
+        conn.close()
 
 @app.delete("/tasks/{task_id}", status_code=status.HTTP_204_NO_CONTENT, summary="Delete a task")
 def delete_task(task_id: int):
-    for index, task in enumerate(tasks_db):
-        if task["id"] == task_id:
-            tasks_db.pop(index)
-            return
-    raise HTTPException(
-        status_code=status.HTTP_404_NOT_FOUND,
-        detail=f"Task {task_id} not found"
-    )
+    conn = get_db_connection()
+    try:
+        cursor = conn.cursor()
+        cursor.execute("SELECT id FROM tasks WHERE id = ?", (task_id,))
+        row = cursor.fetchone()
+        if not row:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Task {task_id} not found"
+            )
+        with conn:
+            conn.execute("DELETE FROM tasks WHERE id = ?", (task_id,))
+        return
+    finally:
+        conn.close()
 
 @app.get("/stats", summary="Get task statistics")
 def get_stats():
@@ -211,6 +233,23 @@ def get_stats():
 
 @app.post("/reset", summary="Reset tasks to initial state")
 def reset_tasks():
-    global tasks_db
-    tasks_db = [dict(task) for task in INITIAL_TASKS]
-    return {"message": "Tasks reset to initial state", "tasks": tasks_db}
+    conn = get_db_connection()
+    try:
+        with conn:
+            conn.execute("DELETE FROM tasks")
+            conn.execute("DELETE FROM sqlite_sequence WHERE name = 'tasks'")
+            conn.executemany(
+                "INSERT INTO tasks (id, title, done) VALUES (?, ?, ?)",
+                [
+                    (1, "Buy milk", 0),
+                    (2, "Read FastAPI docs", 1),
+                    (3, "Build CRUD API assignment", 0)
+                ]
+            )
+            cursor = conn.cursor()
+            cursor.execute("SELECT id, title, done FROM tasks")
+            rows = cursor.fetchall()
+            reset_tasks_list = [row_to_task(r) for r in rows]
+        return {"message": "Tasks reset to initial state", "tasks": reset_tasks_list}
+    finally:
+        conn.close()
