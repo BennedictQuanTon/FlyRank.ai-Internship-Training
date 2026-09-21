@@ -42,3 +42,39 @@ def init_db():
                     )
     finally:
         conn.close()
+
+def get_all_tasks(
+    done: Optional[bool] = None,
+    search: Optional[str] = None,
+    sort: Optional[str] = None
+) -> List[Dict[str, Any]]:
+    conn = get_connection()
+    try:
+        with conn.cursor() as cur:
+            query = "SELECT id, title, done FROM tasks WHERE 1=1"
+            params = []
+            if done is not None:
+                query += " AND done = %s"
+                params.append(done)
+            if search:
+                query += " AND title ILIKE %s"
+                params.append(f"%{search}%")
+            if sort == "title":
+                query += " ORDER BY title ASC"
+            else:
+                query += " ORDER BY id ASC"
+            cur.execute(query, params)
+            rows = cur.fetchall()
+            return [dict(r) for r in rows]
+    finally:
+        conn.close()
+
+def get_task_by_id(task_id: int) -> Optional[Dict[str, Any]]:
+    conn = get_connection()
+    try:
+        with conn.cursor() as cur:
+            cur.execute("SELECT id, title, done FROM tasks WHERE id = %s;", (task_id,))
+            row = cur.fetchone()
+            return dict(row) if row else None
+    finally:
+        conn.close()

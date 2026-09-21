@@ -60,12 +60,7 @@ def get_root():
 def get_health():
     return {"status": "ok"}
 
-def row_to_task(row: sqlite3.Row) -> Dict[str, Any]:
-    return {
-        "id": row["id"],
-        "title": row["title"],
-        "done": bool(row["done"])
-    }
+
 
 @app.get("/tasks", summary="List tasks with optional filtering, search, and sorting")
 def get_tasks(
@@ -73,44 +68,17 @@ def get_tasks(
     search: Optional[str] = Query(None, description="Search term to filter task titles"),
     sort: Optional[str] = Query(None, description="Sort order: 'title' or 'id'")
 ):
-    conn = get_db_connection()
-    try:
-        query = "SELECT id, title, done FROM tasks WHERE 1=1"
-        params = []
-        if done is not None:
-            query += " AND done = ?"
-            params.append(1 if done else 0)
-        if search:
-            query += " AND title LIKE ?"
-            params.append(f"%{search}%")
-        
-        if sort == "title":
-            query += " ORDER BY title ASC"
-        else:
-            query += " ORDER BY id ASC"
-        
-        cursor = conn.cursor()
-        cursor.execute(query, params)
-        rows = cursor.fetchall()
-        return [row_to_task(r) for r in rows]
-    finally:
-        conn.close()
+    return db.get_all_tasks(done=done, search=search, sort=sort)
 
 @app.get("/tasks/{task_id}", summary="Get a single task by ID")
 def get_task(task_id: int):
-    conn = get_db_connection()
-    try:
-        cursor = conn.cursor()
-        cursor.execute("SELECT id, title, done FROM tasks WHERE id = ?", (task_id,))
-        row = cursor.fetchone()
-        if not row:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"Task {task_id} not found"
-            )
-        return row_to_task(row)
-    finally:
-        conn.close()
+    task = db.get_task_by_id(task_id)
+    if not task:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Task {task_id} not found"
+        )
+    return task
 
 @app.post("/tasks", status_code=status.HTTP_201_CREATED, summary="Create a new task")
 def create_task(task_in: TaskCreate):
