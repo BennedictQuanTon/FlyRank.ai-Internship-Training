@@ -87,22 +87,7 @@ def create_task(task_in: TaskCreate):
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Task title cannot be empty or blank"
         )
-    conn = get_db_connection()
-    try:
-        with conn:
-            cursor = conn.cursor()
-            cursor.execute(
-                "INSERT INTO tasks (title, done) VALUES (?, ?)",
-                (task_in.title.strip(), 0)
-            )
-            new_id = cursor.lastrowid
-        return {
-            "id": new_id,
-            "title": task_in.title.strip(),
-            "done": False
-        }
-    finally:
-        conn.close()
+    return db.create_task(task_in.title.strip())
 
 @app.put("/tasks/{task_id}", summary="Update a task")
 def update_task(task_id: int, task_in: TaskUpdate):
@@ -117,88 +102,33 @@ def update_task(task_id: int, task_in: TaskUpdate):
             detail="Task title cannot be empty or blank"
         )
 
-    conn = get_db_connection()
-    try:
-        cursor = conn.cursor()
-        cursor.execute("SELECT id, title, done FROM tasks WHERE id = ?", (task_id,))
-        row = cursor.fetchone()
-        if not row:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"Task {task_id} not found"
-            )
-
-        updated_title = task_in.title.strip() if task_in.title is not None else row["title"]
-        updated_done = (1 if task_in.done else 0) if task_in.done is not None else row["done"]
-
-        with conn:
-            conn.execute(
-                "UPDATE tasks SET title = ?, done = ? WHERE id = ?",
-                (updated_title, updated_done, task_id)
-            )
-
-        return {
-            "id": task_id,
-            "title": updated_title,
-            "done": bool(updated_done)
-        }
-    finally:
-        conn.close()
+    updated = db.update_task(
+        task_id,
+        title=task_in.title.strip() if task_in.title is not None else None,
+        done=task_in.done
+    )
+    if not updated:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Task {task_id} not found"
+        )
+    return updated
 
 @app.delete("/tasks/{task_id}", status_code=status.HTTP_204_NO_CONTENT, summary="Delete a task")
 def delete_task(task_id: int):
-    conn = get_db_connection()
-    try:
-        cursor = conn.cursor()
-        cursor.execute("SELECT id FROM tasks WHERE id = ?", (task_id,))
-        row = cursor.fetchone()
-        if not row:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"Task {task_id} not found"
-            )
-        with conn:
-            conn.execute("DELETE FROM tasks WHERE id = ?", (task_id,))
-        return
-    finally:
-        conn.close()
+    deleted = db.delete_task(task_id)
+    if not deleted:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Task {task_id} not found"
+        )
+    return
 
 @app.get("/stats", summary="Get task statistics")
 def get_stats():
-    conn = get_db_connection()
-    try:
-        cursor = conn.cursor()
-        cursor.execute("SELECT COUNT(*) FROM tasks")
-        total = cursor.fetchone()[0]
-        cursor.execute("SELECT COUNT(*) FROM tasks WHERE done = 1")
-        completed = cursor.fetchone()[0]
-        return {
-            "total": total,
-            "done": completed,
-            "open": total - completed
-        }
-    finally:
-        conn.close()
+    return db.get_stats()
 
 @app.post("/reset", summary="Reset tasks to initial state")
 def reset_tasks():
-    conn = get_db_connection()
-    try:
-        with conn:
-            conn.execute("DELETE FROM tasks")
-            conn.execute("DELETE FROM sqlite_sequence WHERE name = 'tasks'")
-            conn.executemany(
-                "INSERT INTO tasks (id, title, done) VALUES (?, ?, ?)",
-                [
-                    (1, "Buy milk", 0),
-                    (2, "Read FastAPI docs", 1),
-                    (3, "Build CRUD API assignment", 0)
-                ]
-            )
-            cursor = conn.cursor()
-            cursor.execute("SELECT id, title, done FROM tasks")
-            rows = cursor.fetchall()
-            reset_tasks_list = [row_to_task(r) for r in rows]
-        return {"message": "Tasks reset to initial state", "tasks": reset_tasks_list}
-    finally:
-        conn.close()
+    reset_list = db.reset_tasks()
+    return {"message": "Tasks reset to initial state", "tasks": reset_list}

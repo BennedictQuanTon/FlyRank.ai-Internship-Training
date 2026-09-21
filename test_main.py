@@ -105,18 +105,17 @@ def test_sorting():
     assert titles == sorted(titles)
 
 def test_persistence_in_database():
-    import sqlite3
-    from main import DB_FILE
+    import db
     res = client.post("/tasks", json={"title": "DB Direct Test"})
     assert res.status_code == 201
     new_id = res.json()["id"]
 
-    conn = sqlite3.connect(DB_FILE)
-    cursor = conn.cursor()
-    cursor.execute("SELECT title, done FROM tasks WHERE id = ?", (new_id,))
-    row = cursor.fetchone()
+    conn = db.get_connection()
+    with conn.cursor() as cur:
+        cur.execute("SELECT title, done FROM tasks WHERE id = %s;", (new_id,))
+        row = cur.fetchone()
     conn.close()
 
     assert row is not None
-    assert row[0] == "DB Direct Test"
-    assert row[1] == 0
+    assert row["title"] == "DB Direct Test"
+    assert row["done"] is False

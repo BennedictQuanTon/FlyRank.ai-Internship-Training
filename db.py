@@ -78,3 +78,90 @@ def get_task_by_id(task_id: int) -> Optional[Dict[str, Any]]:
             return dict(row) if row else None
     finally:
         conn.close()
+
+def create_task(title: str) -> Dict[str, Any]:
+    conn = get_connection()
+    try:
+        with conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    "INSERT INTO tasks (title, done) VALUES (%s, %s) RETURNING id, title, done;",
+                    (title, False)
+                )
+                return dict(cur.fetchone())
+    finally:
+        conn.close()
+
+def update_task(task_id: int, title: Optional[str] = None, done: Optional[bool] = None) -> Optional[Dict[str, Any]]:
+    conn = get_connection()
+    try:
+        with conn:
+            with conn.cursor() as cur:
+                cur.execute("SELECT id, title, done FROM tasks WHERE id = %s;", (task_id,))
+                existing = cur.fetchone()
+                if not existing:
+                    return None
+                new_title = title if title is not None else existing["title"]
+                new_done = done if done is not None else existing["done"]
+                cur.execute(
+                    "UPDATE tasks SET title = %s, done = %s WHERE id = %s RETURNING id, title, done;",
+                    (new_title, new_done, task_id)
+                )
+                return dict(cur.fetchone())
+    finally:
+        conn.close()
+
+def delete_task(task_id: int) -> bool:
+    conn = get_connection()
+    try:
+        with conn:
+            with conn.cursor() as cur:
+                cur.execute("DELETE FROM tasks WHERE id = %s RETURNING id;", (task_id,))
+                return cur.fetchone() is not None
+    finally:
+        conn.close()
+
+def get_stats() -> Dict[str, int]:
+    conn = get_connection()
+    try:
+        with conn.cursor() as cur:
+            cur.execute("SELECT COUNT(*) AS total FROM tasks;")
+            total = cur.fetchone()["total"]
+            cur.execute("SELECT COUNT(*) AS completed FROM tasks WHERE done = TRUE;")
+            completed = cur.fetchone()["completed"]
+            return {
+                "total": total,
+                "done": completed,
+                "open": total - completed
+            }
+    finally:
+        conn.close()
+
+def reset_tasks() -> List[Dict[str, Any]]:
+    conn = get_connection()
+    try:
+        with conn:
+            with conn.cursor() as cur:
+                cur.execute("TRUNCATE TABLE tasks RESTART IDENTITY;")
+                cur.executemany(
+                    "INSERT INTO tasks (title, done) VALUES (%s, %s);",
+                    [
+                        ("Buy milk", False),
+                        ("Read FastAPI docs", True),
+                        ("Build CRUD API assignment", False),
+                    ]
+                )
+                cur.execute("SELECT id, title, done FROM tasks ORDER BY id ASC;")
+                return [dict(r) for r in cur.fetchall()]
+    finally:
+        conn.close()
+
+def ping_db() -> bool:
+    try:
+        conn = get_connection()
+        with conn.cursor() as cur:
+            cur.execute("SELECT 1;")
+        conn.close()
+        return True
+    except Exception:
+        return False
