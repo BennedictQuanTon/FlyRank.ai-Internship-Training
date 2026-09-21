@@ -1,6 +1,6 @@
-# To-Do List CRUD API (FlyRank Internship Backend Track - W2-A1)
+# To-Do List CRUD API with SQLite Persistence (FlyRank Internship Backend Track - W3-A2)
 
-A lightweight, high-performance RESTful CRUD API for managing a To-Do list, built with **Python 3.10+** and **FastAPI**.
+A production-ready, lightweight RESTful CRUD API for managing a To-Do list, built with **Python 3.10+**, **FastAPI**, and backed by a persistent **SQLite** database (`tasks.db`).
 
 ---
 
@@ -19,14 +19,32 @@ A lightweight, high-performance RESTful CRUD API for managing a To-Do list, buil
    pip install "fastapi[standard]" pydantic pytest httpx
    ```
 
-3. **Start the API server:**
+3. **Start the API server (One Documented Command):**
    ```bash
-   fastapi dev main.py
-   # Or using uvicorn directly:
-   # uvicorn main:app --reload --port 8000
+   uvicorn main:app --reload --port 8000
+   # Or using FastAPI CLI:
+   # fastapi dev main.py
    ```
 
-The server will run on `http://localhost:8000`.
+The server will automatically create `tasks.db`, initialize the `tasks` table with indexes, and seed 3 initial tasks if the database is empty. The server runs at `http://localhost:8000`.
+
+---
+
+## 💡 Why SQLite Was Chosen
+
+* **Zero-configuration & Serverless:** SQLite requires no separate server process, socket connection, daemon, or user credentials to manage.
+* **Standard Library Integration:** Python comes with the `sqlite3` module built-in, requiring no external C-drivers or third-party database adapters.
+* **Single-File Simplicity:** The entire database (schema, tables, indexes, data) is self-contained in a single portable file: `tasks.db`.
+* **True Persistence:** Unlike the in-memory dictionary of Week 2, data stored in SQLite is written safely to disk via ACID transactions and survives application restarts or crashes.
+
+---
+
+## 📂 Database Architecture & Storage Lifecycle
+
+* **Database File:** Located at `./tasks.db` in the repository root.
+* **Auto-creation:** On application startup, `init_db()` runs automatically. If `tasks.db` or table `tasks` does not exist, it is created on the fly.
+* **Idempotent Seeding:** The 3 initial tasks are only seeded if `SELECT COUNT(*) FROM tasks` returns `0`. Restarting the application multiple times will **never** duplicate records.
+* **Git-Ignored:** `tasks.db` and `*.db` are listed in `.gitignore` so each clean clone starts with a fresh local database.
 
 ---
 
@@ -36,63 +54,79 @@ The server will run on `http://localhost:8000`.
 | --- | --- | --- | --- |
 | `GET` | `/` | API metadata & available endpoints | `200 OK` |
 | `GET` | `/health` | Server health check | `200 OK` |
-| `GET` | `/tasks` | List all tasks (supports `?done=true` & `?search=term`) | `200 OK` |
+| `GET` | `/tasks` | List tasks (supports `?done=true`, `?search=term`, `?sort=title`) | `200 OK` |
 | `GET` | `/tasks/{id}` | Get single task details | `200 OK` / `404 Not Found` |
-| `POST` | `/tasks` | Create a new task (Validates non-empty title) | `201 Created` / `400 Bad Request` |
-| `PUT` | `/tasks/{id}` | Update task title and/or completion status | `200 OK` / `400 Bad Request` / `404 Not Found` |
-| `DELETE` | `/tasks/{id}` | Delete a task by ID | `204 No Content` / `404 Not Found` |
-| `GET` | `/stats` | View task statistics (total, done, open) | `200 OK` |
-| `POST` | `/reset` | Reset in-memory task database to initial state | `200 OK` |
+| `POST` | `/tasks` | Create a new task (parameterized `INSERT`) | `201 Created` / `400 Bad Request` |
+| `PUT` | `/tasks/{id}` | Update task title and/or status (parameterized `UPDATE`) | `200 OK` / `400 Bad Request` / `404 Not Found` |
+| `DELETE` | `/tasks/{id}` | Delete a task (parameterized `DELETE`) | `204 No Content` / `404 Not Found` |
+| `GET` | `/stats` | Task statistics via SQL `COUNT(*)` | `200 OK` |
+| `POST` | `/reset` | Atomically reset database table to initial 3 tasks | `200 OK` |
 
 ---
 
-## 💻 Sample `curl` Output
+## 💻 Sample `curl` Interaction
 
-**Request:** Creating a new task
-
+**1. Create a task:**
 ```bash
 curl -i -X POST http://localhost:8000/tasks \
   -H "Content-Type: application/json" \
-  -d '{"title": "Complete Backend Week 2 Assignment"}'
+  -d '{"title": "Verify SQLite Persistence"}'
+```
+*Response:* `201 Created`
+```json
+{"id": 4, "title": "Verify SQLite Persistence", "done": false}
 ```
 
-**Response:**
-
-```http
-HTTP/1.1 201 Created
-date: Wed, 12 Aug 2026 13:30:00 GMT
-server: uvicorn
-content-length: 78
-content-type: application/json
-
-{"id":4,"title":"Complete Backend Week 2 Assignment","done":false}
+**2. Fetch single task:**
+```bash
+curl -i http://localhost:8000/tasks/4
+```
+*Response:* `200 OK`
+```json
+{"id": 4, "title": "Verify SQLite Persistence", "done": false}
 ```
 
 ---
 
-## 📸 Interactive Swagger UI Documentation
+## 📸 Database Inspection with DB Browser for SQLite
 
-Access live interactive OpenAPI documentation at `http://localhost:8000/docs`.
+Opening `tasks.db` in **DB Browser for SQLite** displays the `tasks` table with live rows:
 
-![Swagger UI Screenshot](swagger_ui.jpg)
+![DB Browser for SQLite](db_browser.jpg)
 
----
-
-## 🧪 The Mortality Experiment (In-Memory Data Observation)
-
-* **Observation:** After creating several new tasks via `POST /tasks`, restarting the FastAPI server, and calling `GET /tasks`, all newly created tasks disappeared, and the task list reverted back to the initial 3 tasks.
-* **Reasoning:** Since the data resides strictly in volatile RAM (`in-memory`), its lifecycle is tied directly to the execution process of the application. When the process terminates or restarts, all memory state is cleared. Persistent storage (such as PostgreSQL or SQLite databases) will be introduced in Week 3 to resolve this limitation.
+Both FastAPI and DB Browser for SQLite read directly from the exact same `tasks.db` file on disk. Any edit or manual SQL query made in DB Browser is immediately visible on the API endpoints without restarting the server.
 
 ---
 
-## 🤖 Stage 7: AI vs Me Rematch
+## 🔍 Stage 4: Explored SQLite by Hand
 
-### Prompt Used:
+Using DB Browser's **Execute SQL** tab (or direct SQLite query), the following queries were executed and verified:
 
-> *"Build a lightweight FastAPI CRUD To-Do List API in Python. Requirements: 1) In-memory list storage with 3 default tasks. 2) Endpoints: GET /, GET /health, GET /tasks, GET /tasks/{id}, POST /tasks, PUT /tasks/{id}, DELETE /tasks/{id}. 3) Proper HTTP Status Codes: 200, 201, 204, 400 for empty/missing title validation, 404 for unknown task ID. Return JSON errors on failures."*
+| SQL Query | Description | Result Observed |
+| --- | --- | --- |
+| `SELECT * FROM tasks;` | List every task | Returns 3 rows: `Buy milk`, `Read FastAPI docs`, `Build CRUD API assignment` |
+| `SELECT * FROM tasks WHERE done = 1;` | Filter completed tasks | Returns 1 row: Task 2 (`Read FastAPI docs`) |
+| `SELECT COUNT(*) FROM tasks;` | Count total records | Returns scalar value `3` |
+| `UPDATE tasks SET done = 1;` | Mark all tasks as completed | Updated 3 rows; `GET /tasks` immediately returns all tasks with `done: true` |
+| `DELETE FROM tasks WHERE done = 1;` | Purge completed tasks | Deleted all rows; `GET /tasks` immediately returns `[]` |
 
-### Key Differences & Evaluation:
+---
 
-1. **What the AI did better:** The AI automatically utilized Pydantic response models (`response_model=TaskResponse`), which produced structured schemas directly in the OpenAPI documentation.
-2. **What it got wrong/ignored:** The AI used a standard `HTTP 200 OK` for `DELETE /tasks/{id}` returning `{"message": "Task deleted successfully"}` instead of returning a strict `HTTP 204 No Content` as required by professional REST specifications.
-3. **What the prompt forgot to specify:** The prompt did not specify edge cases for whitespace-only strings (e.g., `"   "` as a title). The AI allowed whitespace titles unless explicitly guarded with a custom field validator.
+## 🛡️ Proof: Storage is "Just an Implementation Detail"
+
+In Assignment 1, tasks were stored in a Python in-memory list `tasks_db`. In Assignment 2, tasks are stored in SQLite `tasks.db`.
+
+Despite replacing the entire storage layer underneath:
+1. **Identical API Contracts:** Every endpoint path, HTTP method, payload format, and status code (`200`, `201`, `204`, `400`, `404`) remains identical.
+2. **100% Test Pass Rate:** The entire original test suite in `test_main.py` passes without any modifications to client assertions.
+
+This demonstrates a foundational backend design principle: **the API is the public contract with clients; the database is merely an implementation detail of the persistence layer**.
+
+---
+
+## ⚡ Extras & Database Optimizations
+
+* **Database Indexes:** Created `idx_tasks_done` on `tasks(done)` and `idx_tasks_title` on `tasks(title)`.
+  * *Why it matters:* An index creates a B-Tree search structure enabling the database engine to locate filtered tasks in $O(\log N)$ time rather than performing an expensive $O(N)$ full-table scan.
+* **Atomic Transactions:** Initial seeding and table resets are wrapped in database transactions (`BEGIN ... COMMIT`).
+  * *Why it matters:* Transactions ensure atomicity (all-or-nothing execution), guaranteeing that partial or corrupted data is never written to disk if a query fails midway.
