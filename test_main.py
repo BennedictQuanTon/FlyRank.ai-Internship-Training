@@ -97,3 +97,26 @@ def test_reset():
     assert res_reset.status_code == 200
     res_after = client.get("/tasks")
     assert len(res_after.json()) == 3
+
+def test_sorting():
+    res = client.get("/tasks?sort=title")
+    assert res.status_code == 200
+    titles = [t["title"] for t in res.json()]
+    assert titles == sorted(titles)
+
+def test_persistence_in_database():
+    import sqlite3
+    from main import DB_FILE
+    res = client.post("/tasks", json={"title": "DB Direct Test"})
+    assert res.status_code == 201
+    new_id = res.json()["id"]
+
+    conn = sqlite3.connect(DB_FILE)
+    cursor = conn.cursor()
+    cursor.execute("SELECT title, done FROM tasks WHERE id = ?", (new_id,))
+    row = cursor.fetchone()
+    conn.close()
+
+    assert row is not None
+    assert row[0] == "DB Direct Test"
+    assert row[1] == 0

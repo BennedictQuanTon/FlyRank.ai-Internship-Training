@@ -22,6 +22,8 @@ def init_db():
                     done INTEGER NOT NULL DEFAULT 0
                 )
             """)
+            conn.execute("CREATE INDEX IF NOT EXISTS idx_tasks_done ON tasks(done)")
+            conn.execute("CREATE INDEX IF NOT EXISTS idx_tasks_title ON tasks(title)")
             cursor = conn.cursor()
             cursor.execute("SELECT COUNT(*) FROM tasks")
             count = cursor.fetchone()[0]
@@ -99,10 +101,11 @@ def row_to_task(row: sqlite3.Row) -> Dict[str, Any]:
         "done": bool(row["done"])
     }
 
-@app.get("/tasks", summary="List tasks with optional filtering and search")
+@app.get("/tasks", summary="List tasks with optional filtering, search, and sorting")
 def get_tasks(
     done: Optional[bool] = Query(None, description="Filter tasks by completion status"),
-    search: Optional[str] = Query(None, description="Search term to filter task titles")
+    search: Optional[str] = Query(None, description="Search term to filter task titles"),
+    sort: Optional[str] = Query(None, description="Sort order: 'title' or 'id'")
 ):
     conn = get_db_connection()
     try:
@@ -114,6 +117,11 @@ def get_tasks(
         if search:
             query += " AND title LIKE ?"
             params.append(f"%{search}%")
+        
+        if sort == "title":
+            query += " ORDER BY title ASC"
+        else:
+            query += " ORDER BY id ASC"
         
         cursor = conn.cursor()
         cursor.execute(query, params)
@@ -223,13 +231,20 @@ def delete_task(task_id: int):
 
 @app.get("/stats", summary="Get task statistics")
 def get_stats():
-    total = len(tasks_db)
-    completed = sum(1 for t in tasks_db if t["done"])
-    return {
-        "total": total,
-        "done": completed,
-        "open": total - completed
-    }
+    conn = get_db_connection()
+    try:
+        cursor = conn.cursor()
+        cursor.execute("SELECT COUNT(*) FROM tasks")
+        total = cursor.fetchone()[0]
+        cursor.execute("SELECT COUNT(*) FROM tasks WHERE done = 1")
+        completed = cursor.fetchone()[0]
+        return {
+            "total": total,
+            "done": completed,
+            "open": total - completed
+        }
+    finally:
+        conn.close()
 
 @app.post("/reset", summary="Reset tasks to initial state")
 def reset_tasks():
