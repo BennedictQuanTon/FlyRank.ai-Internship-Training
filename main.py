@@ -1,14 +1,58 @@
+import sqlite3
+from contextlib import asynccontextmanager
 from fastapi import FastAPI, HTTPException, status, Query
 from pydantic import BaseModel, Field, field_validator
 from typing import List, Dict, Any, Optional
 
+DB_FILE = "tasks.db"
+
+def get_db_connection():
+    conn = sqlite3.connect(DB_FILE)
+    conn.row_factory = sqlite3.Row
+    return conn
+
+def init_db():
+    conn = get_db_connection()
+    try:
+        with conn:
+            conn.execute("""
+                CREATE TABLE IF NOT EXISTS tasks (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    title TEXT NOT NULL,
+                    done INTEGER NOT NULL DEFAULT 0
+                )
+            """)
+            cursor = conn.cursor()
+            cursor.execute("SELECT COUNT(*) FROM tasks")
+            count = cursor.fetchone()[0]
+            if count == 0:
+                conn.executemany(
+                    "INSERT INTO tasks (title, done) VALUES (?, ?)",
+                    [
+                        ("Buy milk", 0),
+                        ("Read FastAPI docs", 1),
+                        ("Build CRUD API assignment", 0)
+                    ]
+                )
+    finally:
+        conn.close()
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    init_db()
+    yield
+
 app = FastAPI(
     title="Task API",
     version="1.0",
-    description="A simple CRUD API for managing a To-Do list."
+    description="A simple CRUD API for managing a To-Do list backed by SQLite.",
+    lifespan=lifespan
 )
 
-# In-memory database
+# Initialize database on module load
+init_db()
+
+# In-memory fallback / initial tasks definition for reference
 INITIAL_TASKS: List[Dict[str, Any]] = [
     {"id": 1, "title": "Buy milk", "done": False},
     {"id": 2, "title": "Read FastAPI docs", "done": True},
