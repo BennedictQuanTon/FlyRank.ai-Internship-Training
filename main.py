@@ -145,14 +145,22 @@ def create_task(task_in: TaskCreate):
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Task title cannot be empty or blank"
         )
-    next_id = max([t["id"] for t in tasks_db], default=0) + 1
-    new_task = {
-        "id": next_id,
-        "title": task_in.title.strip(),
-        "done": False
-    }
-    tasks_db.append(new_task)
-    return new_task
+    conn = get_db_connection()
+    try:
+        with conn:
+            cursor = conn.cursor()
+            cursor.execute(
+                "INSERT INTO tasks (title, done) VALUES (?, ?)",
+                (task_in.title.strip(), 0)
+            )
+            new_id = cursor.lastrowid
+        return {
+            "id": new_id,
+            "title": task_in.title.strip(),
+            "done": False
+        }
+    finally:
+        conn.close()
 
 @app.put("/tasks/{task_id}", summary="Update a task")
 def update_task(task_id: int, task_in: TaskUpdate):
