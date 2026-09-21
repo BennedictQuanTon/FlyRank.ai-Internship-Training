@@ -58,7 +58,11 @@ def get_root():
 
 @app.get("/health", summary="Health check endpoint")
 def get_health():
-    return {"status": "ok"}
+    db_ok = db.ping_db()
+    return {
+        "status": "ok",
+        "db": "ok" if db_ok else "error"
+    }
 
 
 

@@ -17,7 +17,9 @@ def test_root():
 def test_health():
     response = client.get("/health")
     assert response.status_code == 200
-    assert response.json() == {"status": "ok"}
+    data = response.json()
+    assert data["status"] == "ok"
+    assert data["db"] == "ok"
 
 def test_get_tasks():
     response = client.get("/tasks")
