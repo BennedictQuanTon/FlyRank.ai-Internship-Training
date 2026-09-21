@@ -139,3 +139,38 @@ This confirms the core architectural insight: **the API contract is the boundary
 * **Deep Health Check:** `GET /health` executes a live `SELECT 1` query to verify that the database connection pool is responsive. In production, load balancers and container orchestrators (Kubernetes / ECS) use this probe to route traffic only to ready containers and prevent downtime during rollouts.
 * **Database Indexes:** Created B-Tree indexes `idx_tasks_done` and `idx_tasks_title` in PostgreSQL for $O(\log N)$ lookup performance on filter and search queries.
 * **Docker Compose Healthcheck:** Configured `pg_isready` check on `db` service with `depends_on: { db: { condition: service_healthy } }` so the API service only starts when PostgreSQL is ready to accept connections.
+
+---
+
+## 🤖 Stage 6: The AI Rematch (AI vs Me)
+
+### 1. Full Prompt Provided to the AI:
+> *"Containerize our FastAPI To-Do CRUD application with PostgreSQL using Docker and Docker Compose.*
+> *Requirements:*
+> *1. Use the Python lane with psycopg as the database driver.*
+> *2. PostgreSQL runs as a service in compose.yaml with a named volume for persistence.*
+> *3. The app connects using DATABASE_URL from .env (never hardcoded in compose or code).*
+> *4. Table 'tasks' with columns (id serial primary key, title text not null, done boolean not null default false).*
+> *5. Auto-create the table and seed 3 initial tasks ('Buy milk', 'Read FastAPI docs', 'Build CRUD API assignment') only if empty.*
+> *6. Keep the 5 CRUD endpoints identical with parameterized SQL queries (%s placeholders).*
+> *7. Multi-stage or slim Dockerfile for the application.*
+> *8. Single-command startup with docker compose up."*
+
+The AI generated version is quarantined in the [`ai-version/`](ai-version/) directory.
+
+### 2. Concrete Differences & Evaluation (`git diff --no-index`):
+
+1. **What did it do better?**
+   * **Explicit Pydantic Response Schema Integration:** The AI included `response_model=TaskResponse` on route definitions, generating formal OpenAPI JSON schemas in `/docs`.
+2. **What did it get wrong or quietly ignore?**
+   * **Container Startup Race Condition:** The AI's `compose.yaml` used simple `depends_on: [db]`. In Docker, `depends_on` only verifies container startup, not database readiness. Without `pg_isready` and `condition: service_healthy`, the API container crashes on initial startup if it attempts to connect before PostgreSQL has finished initializing its cluster. Our version uses health checks to guarantee orderly, race-free startup.
+   * **Lack of Layered Architecture:** The AI placed raw SQL statements directly inside `main.py` route handlers instead of separating database concerns into a repository module ([db.py](db.py)).
+   * **Bloated Docker Image:** The AI used the base `python:3.10` image without `--no-cache-dir`, resulting in an image over 1 GB, compared to our lightweight `python:3.11-slim` image (~339 MB).
+   * **Incomplete Validation on Partial Updates:** The AI did not guard against whitespace-only titles in `PUT /tasks/{id}`.
+3. **What did the prompt forget to specify?**
+   * The prompt forgot to specify startup synchronization (`healthcheck` with `service_healthy`), separation of repository layer (`db.py`), and defensive whitespace validation on update payloads.
+   * The AI silently decided to put all SQL code inside the route handlers and omit database health checks.
+
+### 3. Rematch & Prompt Improvement:
+* **Improved Prompt Addition:** *"Include a pg_isready healthcheck on the database service and configure the API service with depends_on: condition: service_healthy to avoid startup race conditions. Use python:3.11-slim with --no-cache-dir. Separate all database access code into a repository module db.py."*
+* **What changed:** With this refined prompt, the AI eliminated startup crashes and produced a clean, modular repository layout with a minimal Docker image footprint.
