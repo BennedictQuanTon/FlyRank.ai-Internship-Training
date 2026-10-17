@@ -1,6 +1,8 @@
 import os
 from contextlib import asynccontextmanager
-from fastapi import FastAPI, HTTPException, status, Query
+from fastapi import FastAPI, HTTPException, status, Query, Request
+from fastapi.responses import JSONResponse
+from fastapi.exceptions import RequestValidationError
 from pydantic import BaseModel, Field, field_validator
 from typing import List, Dict, Any, Optional
 import db
@@ -18,6 +20,82 @@ app = FastAPI(
     description="A simple CRUD API for managing a To-Do list backed by PostgreSQL in Docker with Supabase Auth.",
     lifespan=lifespan
 )
+
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(request: Request, exc: RequestValidationError):
+    if request.url.path.startswith("/auth"):
+        return JSONResponse(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            content={"error": "Email and password are required"}
+        )
+    return JSONResponse(
+        status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+        content={"detail": exc.errors()}
+    )
+
+class AuthCredentials(BaseModel):
+    email: Optional[str] = None
+    password: Optional[str] = None
+
+@app.post("/auth/signup", status_code=status.HTTP_201_CREATED, summary="Sign up a new user with Supabase Auth")
+def signup(creds: AuthCredentials):
+    if not creds.email or not creds.password or not creds.email.strip() or not creds.password.strip():
+        return JSONResponse(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            content={"error": "Email and password are required"}
+        )
+    try:
+        client = auth.get_supabase()
+        res = client.auth.sign_up({"email": creds.email.strip(), "password": creds.password.strip()})
+        if not res or not res.user:
+            return JSONResponse(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                content={"error": "Registration failed"}
+            )
+        user_data = {
+            "id": str(res.user.id),
+            "email": res.user.email,
+            "created_at": str(res.user.created_at) if res.user.created_at else None
+        }
+        return JSONResponse(
+            status_code=status.HTTP_201_CREATED,
+            content={"message": "User registered successfully", "user": user_data}
+        )
+    except Exception as e:
+        return JSONResponse(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            content={"error": str(e)}
+        )
+
+@app.post("/auth/login", summary="Log in with email and password")
+def login(creds: AuthCredentials):
+    if not creds.email or not creds.password or not creds.email.strip() or not creds.password.strip():
+        return JSONResponse(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            content={"error": "Email and password are required"}
+        )
+    try:
+        client = auth.get_supabase()
+        res = client.auth.sign_in_with_password({"email": creds.email.strip(), "password": creds.password.strip()})
+        if not res or not res.session or not res.session.access_token:
+            return JSONResponse(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                content={"error": "Invalid login credentials"}
+            )
+        return {
+            "access_token": res.session.access_token,
+            "refresh_token": res.session.refresh_token,
+            "token_type": "bearer",
+            "user": {
+                "id": str(res.user.id) if res.user else None,
+                "email": res.user.email if res.user else creds.email
+            }
+        }
+    except Exception:
+        return JSONResponse(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            content={"error": "Invalid login credentials"}
+        )
 
 # In-memory fallback / initial tasks definition for reference
 INITIAL_TASKS: List[Dict[str, Any]] = [
