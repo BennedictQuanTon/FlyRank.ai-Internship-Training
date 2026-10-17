@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Through-Line: Map Content & CTAs · Long Quan Ton</title>
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Plus+Jakarta+Sans:wght@600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #F8FAFC;
+    --card: #FFFFFF;
+    --text: #0F172A;
+    --muted: #64748B;
+    --border: #E2E8F0;
+    --accent: #059669;
+    --accent-light: #ECFDF5;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Inter', sans-serif;
+    line-height: 1.6;
+    padding: 40px 20px;
+  }
+  .container {
+    max-width: 820px;
+    margin: 0 auto;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 48px;
+    box-shadow: 0 4px 16px rgba(15, 23, 42, 0.04);
+  }
+  .tag {
+    display: inline-block;
+    background: var(--accent-light);
+    color: var(--accent);
+    font-size: 13px;
+    font-weight: 600;
+    padding: 4px 10px;
+    border-radius: 6px;
+    margin-bottom: 12px;
+  }
+  h1 {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-size: 26px;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 6px;
+  }
+  .subtitle {
+    color: var(--muted);
+    font-size: 14px;
+    margin-bottom: 28px;
+  }
+  h2 {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-size: 18px;
+    font-weight: 700;
+    margin: 28px 0 14px;
+    color: var(--text);
+    border-left: 3px solid var(--accent);
+    padding-left: 10px;
+  }
+  p { font-size: 14px; color: #334155; margin-bottom: 12px; }
+
+  .claim-card {
+    background: var(--accent-light);
+    border: 1px solid #A7F3D0;
+    border-radius: 8px;
+    padding: 20px;
+    margin: 16px 0 24px;
+  }
+  .claim-text {
+    font-size: 17px;
+    font-weight: 600;
+    color: #065F46;
+    line-height: 1.4;
+  }
+
+  /* Content Flow Cards */
+  .flow-step {
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px 18px;
+    margin-bottom: 12px;
+    background: #F8FAFC;
+  }
+  .flow-step:nth-child(2) {
+    border-color: #A7F3D0;
+    background: #F0FDF4;
+  }
+  .flow-title {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-weight: 700;
+    font-size: 15px;
+    color: var(--text);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 6px;
+  }
+  .cta-pill {
+    background: #0F172A;
+    color: #F8FAFC;
+    font-size: 11.5px;
+    font-weight: 600;
+    padding: 3px 8px;
+    border-radius: 4px;
+    font-family: 'JetBrains Mono', monospace;
+  }
+  .flow-desc {
+    font-size: 13.5px;
+    color: #475569;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 16px 0 24px;
+    font-size: 13.5px;
+  }
+  th, td {
+    border: 1px solid var(--border);
+    padding: 10px 14px;
+    text-align: left;
+  }
+  th {
+    background: #F1F5F9;
+    font-weight: 600;
+    color: var(--text);
+  }
+  .badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 11.5px;
+    font-weight: 600;
+  }
+  .badge-pass { background: #DCFCE7; color: #166534; }
+  .badge-prog { background: #FEF3C7; color: #92400E; }
+
+  .check-list {
+    list-style: none;
+    margin-top: 14px;
+  }
+  .check-list li {
+    font-size: 13.5px;
+    color: #334155;
+    margin-bottom: 6px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .check-list li::before {
+    content: "✓";
+    color: var(--accent);
+    font-weight: bold;
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <span class="tag">Week 3 · Assignment: #the-through-line</span>
+  <h1>The Through-Line: Map Content & CTAs</h1>
+  <div class="subtitle">Long Quan Ton (Bennedict) · Backend Systems Portfolio · <a href="https://github.com/BennedictQuanTon/todo-crud-api" target="_blank" style="color:var(--accent); text-decoration:none;">BennedictQuanTon/todo-crud-api</a></div>
+
+  <h2>1. The One-Line Claim</h2>
+  <div class="claim-card">
+    <div class="claim-text">"I build disciplined, containerized backend APIs and persistent database systems that run identically on every machine."</div>
+  </div>
+  <p><em>Distilled from 10 AI variations to capture the exact technical progression of our work: moving from in-memory RAM to SQLite to containerized PostgreSQL in Docker without altering external API contracts.</em></p>
+
+  <h2>2. Content Map & Page Architecture</h2>
+  <p>Primary Action Goal: <strong>"Invite me to a technical backend conversation or code review interview."</strong></p>
+
+  <div class="flow-step">
+    <div class="flow-title">
+      <span>1. Hero Section: The Hook</span>
+      <span class="cta-pill">CTA: [Review Code on GitHub]</span>
+    </div>
+    <div class="flow-desc">One-line claim + one-command startup proof pill (Docker Compose + FastAPI + PostgreSQL).</div>
+  </div>
+
+  <div class="flow-step">
+    <div class="flow-title">
+      <span>2. Lead Proof: Containerized Stack (Strongest Work)</span>
+      <span class="cta-pill">CTA: [Inspect DB Architecture]</span>
+    </div>
+    <div class="flow-desc">Assignment A3: Docker Compose orchestration, PostgreSQL named volume persistence, healthcheck synchronization, and live TablePlus capture.</div>
+  </div>
+
+  <div class="flow-step">
+    <div class="flow-title">
+      <span>3. Supporting Proof: Storage Evolution</span>
+      <span class="cta-pill">CTA: [Explore Commit History]</span>
+    </div>
+    <div class="flow-desc">Assignment A1 & A2: Proving storage is just an implementation detail through 16/16 passing pytest test cases.</div>
+  </div>
+
+  <div class="flow-step">
+    <div class="flow-title">
+      <span>4. Engineering Discipline & Stack</span>
+      <span class="cta-pill">CTA: [View Architecture Note]</span>
+    </div>
+    <div class="flow-desc">Parameterized queries (SQL injection safety), transactions, and repository layer design.</div>
+  </div>
+
+  <div class="flow-step">
+    <div class="flow-title">
+      <span>5. Closing Conversion: The Direct Ask</span>
+      <span class="cta-pill">CTA: [Schedule a Technical Chat]</span>
+    </div>
+    <div class="flow-desc">Invitation for backend engineering internship / junior roles with direct email link.</div>
+  </div>
+
+  <h2>3. "Still Need to Gather" Honest Checklist</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Artifact</th>
+        <th>Description</th>
+        <th>Status</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>Database Screenshot</strong></td>
+        <td>TablePlus query output on localhost:5432</td>
+        <td><span class="badge badge-pass">Ready (postgres_db.jpg)</span></td>
+      </tr>
+      <tr>
+        <td><strong>Test Verification</strong></td>
+        <td>pytest -v terminal log (16 passed in 0.50s)</td>
+        <td><span class="badge badge-pass">Ready & Verified</span></td>
+      </tr>
+      <tr>
+        <td><strong>Git Commit Sequence</strong></td>
+        <td>Sequential stage commits (&ge; 6 commits)</td>
+        <td><span class="badge badge-pass">Ready (9 commits)</span></td>
+      </tr>
+      <tr>
+        <td><strong>Docker Walkthrough GIF</strong></td>
+        <td>10s capture of docker compose down/up persistence</td>
+        <td><span class="badge badge-prog">Ready for build week</span></td>
+      </tr>
+      <tr>
+        <td><strong>Professional Portrait</strong></td>
+        <td>High-resolution natural light photograph</td>
+        <td><span class="badge badge-pass">Ready to link</span></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2>4. Pass / Revise Verification</h2>
+  <ul class="check-list">
+    <li>A single, memorable claim, not a paragraph.</li>
+    <li>Every section has an ordered position and a named call to action; the strongest work leads.</li>
+    <li>All calls to action ladder directly up to the primary technical interview conversation.</li>
+    <li>The gather-list is honest and ensures build week is completely unblocked.</li>
+  </ul>
+</div>
+
+</body>
+</html>
