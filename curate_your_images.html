@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Curate Your Images · Bennedict Quan Ton</title>
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Plus+Jakarta+Sans:wght@600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #F8FAFC;
+    --card: #FFFFFF;
+    --text: #0F172A;
+    --muted: #64748B;
+    --border: #E2E8F0;
+    --accent: #059669;
+    --accent-light: #ECFDF5;
+    --danger-bg: #FFF1F2;
+    --danger-border: #FECDD3;
+    --danger-text: #9F1239;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Inter', sans-serif;
+    line-height: 1.6;
+    padding: 40px 20px;
+  }
+  .container {
+    max-width: 840px;
+    margin: 0 auto;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 48px;
+    box-shadow: 0 4px 16px rgba(15, 23, 42, 0.04);
+  }
+  .tag {
+    display: inline-block;
+    background: var(--accent-light);
+    color: var(--accent);
+    font-size: 13px;
+    font-weight: 600;
+    padding: 4px 10px;
+    border-radius: 6px;
+    margin-bottom: 12px;
+  }
+  h1 {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-size: 26px;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 6px;
+  }
+  .subtitle {
+    color: var(--muted);
+    font-size: 14px;
+    margin-bottom: 28px;
+  }
+  h2 {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-size: 18px;
+    font-weight: 700;
+    margin: 28px 0 14px;
+    color: var(--text);
+    border-left: 3px solid var(--accent);
+    padding-left: 10px;
+  }
+  p { font-size: 14px; color: #334155; margin-bottom: 12px; }
+  
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 14px 0 24px;
+    font-size: 13.5px;
+  }
+  th, td {
+    border: 1px solid var(--border);
+    padding: 10px 14px;
+    text-align: left;
+  }
+  th {
+    background: #F1F5F9;
+    font-weight: 600;
+    color: var(--text);
+  }
+  
+  .badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 11.5px;
+    font-weight: 600;
+  }
+  .badge-real { background: #DCFCE7; color: #166534; }
+  .badge-vector { background: #E0E7FF; color: #3730A3; }
+
+  /* Rejection Case Cards */
+  .rejection-card {
+    background: var(--danger-bg);
+    border: 1px solid var(--danger-border);
+    border-radius: 8px;
+    padding: 18px;
+    margin-bottom: 16px;
+  }
+  .rejection-head {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--danger-text);
+    margin-bottom: 8px;
+  }
+  .rejection-body {
+    font-size: 13.5px;
+    color: #4C0519;
+  }
+  .rejection-body strong { color: #881337; }
+
+  .check-list {
+    list-style: none;
+    margin-top: 14px;
+  }
+  .check-list li {
+    font-size: 13.5px;
+    color: #334155;
+    margin-bottom: 6px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .check-list li::before {
+    content: "✓";
+    color: var(--accent);
+    font-weight: bold;
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <span class="tag">Week 3 · Assignment: #curate-your-images</span>
+  <h1>Kill Your Darlings: Curate Your Images</h1>
+  <div class="subtitle">Bennedict Quan Ton · Backend Systems Portfolio · <a href="https://github.com/BennedictQuanTon/todo-crud-api" target="_blank" style="color:var(--accent); text-decoration:none;">BennedictQuanTon/todo-crud-api</a></div>
+
+  <h2>1. Portfolio Image Needs & The Keepers</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Asset</th>
+        <th>Page Section</th>
+        <th>Format</th>
+        <th>Technical Purpose</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>Professional Portrait</strong></td>
+        <td>Hero / Bio</td>
+        <td><span class="badge badge-real">Real Photo</span></td>
+        <td>Authentic human representation, natural lighting, establishing accountability.</td>
+      </tr>
+      <tr>
+        <td><strong>TablePlus DB Capture</strong> (<code>postgres_db.jpg</code>)</td>
+        <td>Lead Case Study</td>
+        <td><span class="badge badge-real">Real Capture</span></td>
+        <td>High-resolution capture of Docker PostgreSQL (port 5432) showing schema and rows.</td>
+      </tr>
+      <tr>
+        <td><strong>Pytest Terminal Pass</strong> (<code>pytest_terminal.png</code>)</td>
+        <td>Case Study 2</td>
+        <td><span class="badge badge-real">Real Capture</span></td>
+        <td>Terminal output proving 16/16 tests passing across storage migrations in 0.50s.</td>
+      </tr>
+      <tr>
+        <td><strong>Docker Architecture</strong> (<code>docker_arch.svg</code>)</td>
+        <td>Architecture</td>
+        <td><span class="badge badge-vector">Vector Diagram</span></td>
+        <td>Restrained 2D diagram illustrating container network bridges and volumes.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2>2. Where Real Captures Beat AI Generation</h2>
+  <p>The core insight: <em>The work is the painting; the portfolio is the frame.</em> Real screenshots of database tables and terminal logs build immediate credibility with senior engineering interviewers, whereas generic AI illustrations raise red flags.</p>
+
+  <h2>3. Discernment in Action: Ruthless Rejection Notes (Graded)</h2>
+  
+  <div class="rejection-card">
+    <div class="rejection-head">❌ Rejected: 3D Holographic Server Room Hero</div>
+    <div class="rejection-body">
+      <p><strong>What AI Generated:</strong> A glossy 3D isometric rendering of floating purple server racks with glowing neon fiber-optic cables and glassmorphism cubes.</p>
+      <p><strong>Why Rejected:</strong> Textbook <strong>"AI slop."</strong> Visually noisy, generic, and totally disconnected from real software engineering. It competed aggressively with the case studies and screamed "fake demo."</p>
+      <p><strong>Decision:</strong> Dropped entirely. Replaced with clean typography over generous whitespace (<code>#F8FAFC</code>) leading directly to real TablePlus proof.</p>
+    </div>
+  </div>
+
+  <div class="rejection-card">
+    <div class="rejection-head">❌ Rejected: Abstract Glowing Database Cylinder</div>
+    <div class="rejection-body">
+      <p><strong>What AI Generated:</strong> A metallic cylinder graphic with glowing laser rings and floating binary digits.</p>
+      <p><strong>Why Rejected:</strong> Pure decorative clutter with zero evidentiary value. It communicates nothing about relational schemas, parameterized SQL safety, or Docker volume persistence.</p>
+      <p><strong>Decision:</strong> Replaced with an unedited, real screenshot of PostgreSQL executing on <code>localhost:5432</code>.</p>
+    </div>
+  </div>
+
+  <div class="rejection-card">
+    <div class="rejection-head">❌ Rejected: Cyberpunk Rim-Lit AI Avatar</div>
+    <div class="rejection-body">
+      <p><strong>What AI Generated:</strong> A stylized digital portrait with dramatic teal-and-magenta lighting and airbrushed skin.</p>
+      <p><strong>Why Rejected:</strong> Uncanny and synthetic. Engineering teams hire real human colleagues, not video game avatars.</p>
+      <p><strong>Decision:</strong> Selected an authentic, well-lit real photograph with natural color balance.</p>
+    </div>
+  </div>
+
+  <h2>4. Pass / Revise Verification</h2>
+  <ul class="check-list">
+    <li>Images map to real needs, the work is shown with real captures, not AI stand-ins.</li>
+    <li>Connective diagrams share one consistent style/mood in our palette (#0F172A, #059669).</li>
+    <li>A real photo is used where the subject is the person.</li>
+    <li>Rejection notes demonstrate genuine technical judgment grounded in proof and credibility.</li>
+  </ul>
+</div>
+
+</body>
+</html>
