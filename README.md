@@ -156,3 +156,39 @@ pytest test_auth.py -v
 ```
 
 All 14 unit and integration test cases pass 100% with zero warnings.
+
+---
+
+## 🤖 Stage 7: The AI Rematch (AI vs Me)
+
+### 1. Specification Prompt Provided to the AI
+> *"Build a secured REST API using Python FastAPI and Supabase Auth as the Identity Provider.*
+> *Implement 5 endpoints:*
+> *1. POST /auth/signup (accepts JSON {email, password}, validates inputs returning 400 on empty fields, calls supabase.auth.sign_up, returns 201 on success).*
+> *2. POST /auth/login (accepts {email, password}, returns 400 on missing fields, calls supabase.auth.sign_in_with_password, returns 200 with access_token and refresh_token, or 401 on bad credentials).*
+> *3. GET /public/info (public endpoint returning 200 with public message).*
+> *4. GET /protected/profile and GET /protected/dashboard (token-guarded endpoints returning user metadata on 200, or 401 with {'error': '...'} on missing/invalid/expired token).*
+> *5. POST /auth/logout (protected endpoint, calls supabase.auth.sign_out, returns 204).*
+> *Extract token inspection and verification into a reusable FastAPI dependency using HTTPBearer. Ensure Swagger UI at /docs supports Authorize padlock."*
+
+The raw AI generated code is quarantined in [`ai-version/`](ai-version/).
+
+### 2. Concrete Differences & Architectural Analysis (`git diff --no-index`)
+
+1. **How did it handle token extraction — did it correctly parse the "Bearer " prefix, or would `Authorization: <token>` slip through or crash?**
+   * The AI used FastAPI's default `security = HTTPBearer()` where `auto_error` defaults to `True`. When a client calls a protected route without an `Authorization` header, Starlette's dependency immediately aborts with `HTTP 403 Forbidden` (`{"detail": "Not authenticated"}`) instead of the assignment's required `HTTP 401 Unauthorized` (`{"error": "Access token required"}`).
+   * In our hand-crafted implementation, we used `HTTPBearer(auto_error=False)` and inspected the header manually, correctly returning `401 Unauthorized` whenever a header is missing, malformed, or lacks the `Bearer ` prefix.
+
+2. **What security flaws might it have introduced — does it safely reject an invalid token, or trust getUser without checking the error? Did it leak the service_role key or log the token?**
+   * **Unsanitized Whitespace:** The AI declared standard Pydantic models `email: str`, `password: str`. A malicious or invalid input with only spaces (`{"email": "  ", "password": "  "}`) was accepted by validation and forwarded directly to Supabase. Our implementation explicitly trims and checks for empty or blank strings, returning `400 Bad Request`.
+   * **Internal Error Leakage:** The AI caught registration errors with `raise HTTPException(status_code=400, detail=str(e))`, which exposes raw network errors, database hostnames, or API key validation failures directly to external callers.
+   * **Unsafe Unpacking:** The AI assumed `supabase.auth.get_user(token)` always returns a valid object with `.user` attribute populated, rather than handling `None` checks defensively.
+
+3. **What did your prompt forget to specify — and what did the AI silently decide for you?**
+   * The initial prompt did not specify the exact JSON error schema (`{"error": "..."}` vs FastAPI's default `{"detail": "..."}`), nor did it specify the custom exception handler for `RequestValidationError` to map 422 errors to 400 for `/auth` routes.
+   * The AI silently chose to place all database connection, authentication, and route handling into a single monolithic file rather than maintaining a clean, modular structure (`auth.py` + `main.py`).
+
+### 3. Rematch & Prompt Refinement
+* **Refined Prompt:** *"Configure HTTPBearer(auto_error=False) and custom exception handlers so missing, malformed, or invalid tokens strictly yield 401 with JSON key 'error'. Sanitize whitespace on credential inputs. Separate auth client initialization and dependencies into auth.py."*
+* **Outcome:** With these precise constraints, the regenerated AI solution successfully adhered to strict 401 status codes and matched the modular architecture of the hand-crafted codebase.
+

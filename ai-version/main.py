@@ -1,115 +1,68 @@
 import os
-from typing import List, Optional
-from fastapi import FastAPI, HTTPException, status
+from fastapi import FastAPI, HTTPException, status, Depends
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from pydantic import BaseModel
-import psycopg
-from psycopg.rows import dict_row
+from supabase import create_client, Client
+from dotenv import load_dotenv
 
-app = FastAPI(title="AI Version - Containerized Postgres To-Do API")
+load_dotenv()
 
-DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://postgres:dev@localhost:5432/tasks")
+app = FastAPI(title="AI Auth API")
 
-def get_db():
-    return psycopg.connect(DATABASE_URL, row_factory=dict_row)
+SUPABASE_URL = os.getenv("SUPABASE_URL", "")
+SUPABASE_KEY = os.getenv("SUPABASE_KEY", "")
 
-def init_db():
+supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
+security = HTTPBearer()  # Notice: auto_error defaults to True, throwing 403 instead of 401 on missing header!
+
+class UserCredentials(BaseModel):
+    email: str
+    password: str
+
+@app.post("/auth/signup", status_code=status.HTTP_201_CREATED)
+def signup(creds: UserCredentials):
+    # Flaw: Does not check for blank whitespace strings ("   ")
     try:
-        with get_db() as conn:
-            with conn.cursor() as cur:
-                cur.execute("""
-                    CREATE TABLE IF NOT EXISTS tasks (
-                        id SERIAL PRIMARY KEY,
-                        title TEXT NOT NULL,
-                        done BOOLEAN NOT NULL DEFAULT FALSE
-                    );
-                """)
-                cur.execute("SELECT COUNT(*) FROM tasks;")
-                if cur.fetchone()["count"] == 0:
-                    cur.executemany(
-                        "INSERT INTO tasks (title, done) VALUES (%s, %s);",
-                        [
-                            ("Buy milk", False),
-                            ("Read FastAPI docs", True),
-                            ("Build CRUD API assignment", False),
-                        ]
-                    )
+        res = supabase.auth.sign_up({"email": creds.email, "password": creds.password})
+        return res.user
     except Exception as e:
-        print(f"Database init warning: {e}")
+        raise HTTPException(status_code=400, detail=str(e))
 
-init_db()
+@app.post("/auth/login")
+def login(creds: UserCredentials):
+    try:
+        res = supabase.auth.sign_in_with_password({"email": creds.email, "password": creds.password})
+        return {
+            "access_token": res.session.access_token,
+            "refresh_token": res.session.refresh_token,
+            "token_type": "bearer"
+        }
+    except Exception:
+        raise HTTPException(status_code=401, detail="Invalid login credentials")
 
-class TaskCreate(BaseModel):
-    title: str
+@app.get("/public/info")
+def public_info():
+    return {"message": "Welcome stranger! This info is public."}
 
-class TaskUpdate(BaseModel):
-    title: Optional[str] = None
-    done: Optional[bool] = None
+# Auth dependency
+def get_user(credentials: HTTPAuthorizationCredentials = Depends(security)):
+    # Flaw: Assumes credentials is always valid and does not check for malformed Bearer tokens manually
+    token = credentials.credentials
+    try:
+        user_res = supabase.auth.get_user(token)
+        return user_res.user
+    except Exception:
+        raise HTTPException(status_code=401, detail="Invalid or expired token")
 
-class TaskResponse(BaseModel):
-    id: int
-    title: str
-    done: bool
+@app.get("/protected/profile")
+def profile(user=Depends(get_user)):
+    return user
 
-@app.get("/")
-def get_root():
-    return {"message": "AI Postgres To-Do API"}
+@app.get("/protected/dashboard")
+def dashboard(user=Depends(get_user)):
+    return {"status": "ok", "user": user}
 
-@app.get("/health")
-def get_health():
-    return {"status": "ok"}
-
-@app.get("/tasks", response_model=List[TaskResponse])
-def get_tasks():
-    with get_db() as conn:
-        with conn.cursor() as cur:
-            cur.execute("SELECT id, title, done FROM tasks ORDER BY id ASC;")
-            return [dict(r) for r in cur.fetchall()]
-
-@app.get("/tasks/{task_id}", response_model=TaskResponse)
-def get_task(task_id: int):
-    with get_db() as conn:
-        with conn.cursor() as cur:
-            cur.execute("SELECT id, title, done FROM tasks WHERE id = %s;", (task_id,))
-            row = cur.fetchone()
-            if not row:
-                raise HTTPException(status_code=404, detail="Task not found")
-            return dict(row)
-
-@app.post("/tasks", response_model=TaskResponse, status_code=status.HTTP_201_CREATED)
-def create_task(task_in: TaskCreate):
-    if not task_in.title or not task_in.title.strip():
-        raise HTTPException(status_code=400, detail="Title cannot be empty")
-    with get_db() as conn:
-        with conn.cursor() as cur:
-            cur.execute(
-                "INSERT INTO tasks (title, done) VALUES (%s, %s) RETURNING id, title, done;",
-                (task_in.title.strip(), False)
-            )
-            return dict(cur.fetchone())
-
-@app.put("/tasks/{task_id}", response_model=TaskResponse)
-def update_task(task_id: int, task_in: TaskUpdate):
-    if task_in.title is None and task_in.done is None:
-        raise HTTPException(status_code=400, detail="Must provide title or done")
-    with get_db() as conn:
-        with conn.cursor() as cur:
-            cur.execute("SELECT id, title, done FROM tasks WHERE id = %s;", (task_id,))
-            existing = cur.fetchone()
-            if not existing:
-                raise HTTPException(status_code=404, detail="Task not found")
-            new_title = task_in.title.strip() if task_in.title is not None else existing["title"]
-            new_done = task_in.done if task_in.done is not None else existing["done"]
-            cur.execute(
-                "UPDATE tasks SET title = %s, done = %s WHERE id = %s RETURNING id, title, done;",
-                (new_title, new_done, task_id)
-            )
-            return dict(cur.fetchone())
-
-@app.delete("/tasks/{task_id}", status_code=status.HTTP_204_NO_CONTENT)
-def delete_task(task_id: int):
-    with get_db() as conn:
-        with conn.cursor() as cur:
-            cur.execute("DELETE FROM tasks WHERE id = %s RETURNING id;", (task_id,))
-            if not cur.fetchone():
-                raise HTTPException(status_code=404, detail="Task not found")
+@app.post("/auth/logout", status_code=status.HTTP_204_NO_CONTENT)
+def logout(user=Depends(get_user)):
+    supabase.auth.sign_out()
     return None
