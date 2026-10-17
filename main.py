@@ -4,21 +4,20 @@ from fastapi import FastAPI, HTTPException, status, Query
 from pydantic import BaseModel, Field, field_validator
 from typing import List, Dict, Any, Optional
 import db
+import auth
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     db.init_db()
+    print("Server running and connected to Supabase")
     yield
 
 app = FastAPI(
     title="Task API",
     version="1.0",
-    description="A simple CRUD API for managing a To-Do list backed by PostgreSQL in Docker.",
+    description="A simple CRUD API for managing a To-Do list backed by PostgreSQL in Docker with Supabase Auth.",
     lifespan=lifespan
 )
-
-# Initialize database on module load
-db.init_db()
 
 # In-memory fallback / initial tasks definition for reference
 INITIAL_TASKS: List[Dict[str, Any]] = [

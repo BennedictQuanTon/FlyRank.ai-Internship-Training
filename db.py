@@ -15,7 +15,11 @@ def get_connection():
     return psycopg.connect(DATABASE_URL, row_factory=dict_row)
 
 def init_db():
-    conn = get_connection()
+    try:
+        conn = get_connection()
+    except Exception as e:
+        print(f"Notice: PostgreSQL connection unavailable ({e}). Start Docker container to enable task database.")
+        return
     try:
         with conn:
             with conn.cursor() as cur:
