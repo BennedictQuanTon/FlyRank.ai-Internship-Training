@@ -1,0 +1,20 @@
+BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//FlyRank AI Internship//Bennedict Ton Portfolio Reminder//EN
+CALSCALE:GREGORIAN
+METHOD:PUBLISH
+BEGIN:VEVENT
+UID:bennedict-cs4-reminder-20261115T020000Z@flyrank.ai
+DTSTAMP:20261017T083000Z
+DTSTART:20261115T020000Z
+DTEND:20261115T030000Z
+SUMMARY:🚀 Ship Case Study 04 to Live Portfolio (Bennedict Ton)
+DESCRIPTION:Checklist for shipping Case Study 04 (Polite Scraper & Research Scout):\n1. Run pytest suite (6/6 tests passing)\n2. Grab terminal output & output/books.json screenshot\n3. Use Claude Project prompt: 'Add Case Study 04 following the 3-beat shape in THE_THROUGH_LINE.md'\n4. Paste HTML into portfolio/index.html under .case-study-list\n5. git commit -m 'feat: ship Case Study 04' and git push origin main
+STATUS:CONFIRMED
+BEGIN:VALARM
+TRIGGER:-PT15M
+ACTION:DISPLAY
+DESCRIPTION:Reminder: Time to ship Case Study 04 to your live portfolio!
+END:VALARM
+END:VEVENT
+END:VCALENDAR
