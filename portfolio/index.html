@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Bennedict Ton · Backend Systems & Applied AI Engineer</title>
+  <meta name="description" content="Portfolio of Long Quan (Bennedict) Ton — Backend Systems & Applied AI Engineer. High-reliability systems, deterministic API contracts, and agentic workflows." />
+  <link rel="icon" type="image/svg+xml" href="favicon.svg" />
+  
+  <!-- Typography from Identity Kit -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet" />
+  
+  <style>
+    :root {
+      --bg-canvas: #F8FAFC;
+      --surface-card: #FFFFFF;
+      --text-main: #0F172A;
+      --text-muted: #64748B;
+      --border-color: #E2E8F0;
+      --accent-emerald: #059669;
+      --accent-emerald-light: #ECFDF5;
+      --font-heading: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+      --font-body: 'Inter', system-ui, -apple-system, sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: var(--bg-canvas);
+      color: var(--text-main);
+      font-family: var(--font-body);
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+      padding: 32px 16px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 760px;
+      margin: 0 auto;
+    }
+
+    /* Top bar badge */
+    .milestone-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 14px;
+      background: var(--accent-emerald-light);
+      border: 1px solid #A7F3D0;
+      border-radius: 9999px;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--accent-emerald);
+      margin-bottom: 24px;
+    }
+
+    .pulse-dot {
+      width: 8px;
+      height: 8px;
+      background-color: var(--accent-emerald);
+      border-radius: 50%;
+      box-shadow: 0 0 0 0 rgba(5, 150, 105, 0.7);
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(5, 150, 105, 0.7); }
+      70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(5, 150, 105, 0); }
+      100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(5, 150, 105, 0); }
+    }
+
+    /* Header & Identity */
+    header {
+      margin-bottom: 32px;
+    }
+
+    h1 {
+      font-family: var(--font-heading);
+      font-size: clamp(28px, 5vw, 40px);
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      line-height: 1.15;
+      color: var(--text-main);
+      margin-bottom: 8px;
+    }
+
+    .tagline {
+      font-size: clamp(16px, 3vw, 19px);
+      font-weight: 500;
+      color: var(--text-muted);
+      margin-bottom: 20px;
+    }
+
+    /* Through-line block */
+    .through-line {
+      background: var(--surface-card);
+      border: 1px solid var(--border-color);
+      border-left: 4px solid var(--accent-emerald);
+      padding: 20px;
+      border-radius: 8px;
+      font-size: 16px;
+      color: var(--text-main);
+      margin-bottom: 32px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    }
+
+    .through-line strong {
+      display: block;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--accent-emerald);
+      margin-bottom: 6px;
+    }
+
+    /* Stack Decision Card */
+    .card {
+      background: var(--surface-card);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 24px;
+      margin-bottom: 24px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+    }
+
+    .card h2 {
+      font-family: var(--font-heading);
+      font-size: 19px;
+      font-weight: 700;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .specs-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 16px;
+      margin-bottom: 16px;
+    }
+
+    .spec-item {
+      background: var(--bg-canvas);
+      padding: 12px 16px;
+      border-radius: 8px;
+      border: 1px solid var(--border-color);
+    }
+
+    .spec-label {
+      font-size: 12px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      margin-bottom: 4px;
+    }
+
+    .spec-value {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-main);
+      font-family: var(--font-mono);
+    }
+
+    /* Case studies placeholders */
+    .case-study-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .case-study-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 18px;
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      background: var(--bg-canvas);
+      transition: all 0.2s ease;
+    }
+
+    .case-study-item:hover {
+      border-color: #CBD5E1;
+      transform: translateY(-1px);
+    }
+
+    .case-study-title {
+      font-weight: 600;
+      font-size: 15px;
+    }
+
+    .case-study-status {
+      font-size: 12px;
+      padding: 3px 8px;
+      background: #E2E8F0;
+      color: var(--text-muted);
+      border-radius: 4px;
+      font-family: var(--font-mono);
+    }
+
+    /* Footer & Links */
+    footer {
+      margin-top: 40px;
+      padding-top: 24px;
+      border-top: 1px solid var(--border-color);
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+      font-size: 14px;
+      color: var(--text-muted);
+    }
+
+    .links {
+      display: flex;
+      gap: 16px;
+    }
+
+    .links a {
+      color: var(--text-main);
+      text-decoration: none;
+      font-weight: 500;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .links a:hover {
+      color: var(--accent-emerald);
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <!-- Milestone indicator -->
+    <div class="milestone-badge">
+      <span class="pulse-dot"></span>
+      Empty but Live · Week 4 Milestone
+    </div>
+
+    <!-- Header identity -->
+    <header>
+      <h1>Long Quan (Bennedict) Ton</h1>
+      <div class="tagline">Backend Systems &amp; Applied AI Engineer</div>
+    </header>
+
+    <!-- The Through-Line -->
+    <div class="through-line">
+      <strong>The Through-Line</strong>
+      "I build high-reliability backend systems, deterministic API contracts, and agentic AI workflows that turn messy enterprise data into clear, resilient digital products."
+    </div>
+
+    <!-- Stack Choice Rationale -->
+    <section class="card">
+      <h2>🚀 Chosen Stack: Code with AI (HTML5 + Vanilla CSS)</h2>
+      <p style="color: var(--text-muted); font-size: 14px; margin-bottom: 16px;">
+        Selected as the smallest, fastest, and most durable stack for a technical backend portfolio. Zero build-step fragility, zero node module bloat, free forever on global edge CDN.
+      </p>
+
+      <div class="specs-grid">
+        <div class="spec-item">
+          <div class="spec-label">Tech Stack</div>
+          <div class="spec-value">HTML5 / Vanilla CSS</div>
+        </div>
+        <div class="spec-item">
+          <div class="spec-label">Hosting Platform</div>
+          <div class="spec-value">Netlify / GitHub Pages</div>
+        </div>
+        <div class="spec-item">
+          <div class="spec-label">Backend Requirement</div>
+          <div class="spec-value">Not Yet (Static 1st)</div>
+        </div>
+        <div class="spec-item">
+          <div class="spec-label">Deploy Status</div>
+          <div class="spec-value" style="color: var(--accent-emerald);">🟢 LIVE ON PUBLIC URL</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Content Map / Case Studies Slots -->
+    <section class="card">
+      <h2>📁 Planned Case Studies (Filling in Week 5)</h2>
+      <ul class="case-study-list">
+        <li class="case-study-item">
+          <div class="case-study-title">01 · Three Evolutionary Storage Layers (In-Memory → SQLite → PostgreSQL in Docker)</div>
+          <span class="case-study-status">Ready to load</span>
+        </li>
+        <li class="case-study-item">
+          <div class="case-study-title">02 · Multi-Tenant Auth &amp; Token Gate (FastAPI + Supabase Auth + Swagger UI)</div>
+          <span class="case-study-status">Ready to load</span>
+        </li>
+        <li class="case-study-item">
+          <div class="case-study-title">03 · Agentic Tool Calling &amp; Deterministic Schemas</div>
+          <span class="case-study-status">Drafted</span>
+        </li>
+      </ul>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+      <div>© 2026 Bennedict Quan Ton · FlyRank AI Internship</div>
+      <div class="links">
+        <a href="https://github.com/BennedictQuanTon" target="_blank" rel="noopener">GitHub ↗</a>
+        <a href="https://github.com/BennedictQuanTon/todo-crud-api" target="_blank" rel="noopener">Todo CRUD Repo ↗</a>
+        <a href="https://linkedin.com" target="_blank" rel="noopener">LinkedIn ↗</a>
+      </div>
+    </footer>
+  </div>
+
+</body>
+</html>
