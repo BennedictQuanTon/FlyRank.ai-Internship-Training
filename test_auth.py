@@ -118,8 +118,32 @@ def test_protected_profile_unverified_missing_token():
     assert res3.status_code == 401
     assert res3.json() == {"error": "Access token required"}
 
-def test_protected_profile_unverified_token_present():
-    res = client.get("/protected/profile", headers={"Authorization": "Bearer dummy_token_abc"})
+def test_protected_profile_verified_success(monkeypatch):
+    mock_supabase = MagicMock()
+    mock_user = MagicMock()
+    mock_user.id = "user-uuid-999"
+    mock_user.email = "verified@example.com"
+    mock_user.created_at = "2026-10-17T12:00:00Z"
+    
+    mock_res = MagicMock()
+    mock_res.user = mock_user
+    mock_supabase.auth.get_user.return_value = mock_res
+    monkeypatch.setattr(auth, "get_supabase", lambda: mock_supabase)
+
+    res = client.get("/protected/profile", headers={"Authorization": "Bearer valid_jwt_token"})
     assert res.status_code == 200
-    assert res.json()["token"] == "dummy_token_abc"
+    data = res.json()
+    assert data["id"] == "user-uuid-999"
+    assert data["email"] == "verified@example.com"
+    assert data["created_at"] == "2026-10-17T12:00:00Z"
+
+def test_protected_profile_invalid_or_expired_token(monkeypatch):
+    mock_supabase = MagicMock()
+    mock_supabase.auth.get_user.side_effect = Exception("JWT expired or invalid")
+    monkeypatch.setattr(auth, "get_supabase", lambda: mock_supabase)
+
+    res = client.get("/protected/profile", headers={"Authorization": "Bearer tampered_or_expired_jwt"})
+    assert res.status_code == 401
+    assert res.json() == {"error": "Invalid or expired token"}
+
 

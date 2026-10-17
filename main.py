@@ -101,8 +101,8 @@ def login(creds: AuthCredentials):
 def public_info():
     return {"message": "Welcome stranger! This info is public."}
 
-@app.get("/protected/profile", summary="User profile (unverified token check)")
-def get_protected_profile_unverified(request: Request):
+@app.get("/protected/profile", summary="User profile (verified token)")
+def get_protected_profile(request: Request):
     auth_header = request.headers.get("Authorization")
     if not auth_header or not auth_header.startswith("Bearer "):
         return JSONResponse(
@@ -115,7 +115,24 @@ def get_protected_profile_unverified(request: Request):
             status_code=status.HTTP_401_UNAUTHORIZED,
             content={"error": "Access token required"}
         )
-    return {"message": "Token presented", "token": token}
+    try:
+        client = auth.get_supabase()
+        res = client.auth.get_user(token)
+        if not res or not res.user:
+            return JSONResponse(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                content={"error": "Invalid or expired token"}
+            )
+        return {
+            "id": str(res.user.id),
+            "email": res.user.email,
+            "created_at": str(res.user.created_at) if res.user.created_at else None
+        }
+    except Exception:
+        return JSONResponse(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            content={"error": "Invalid or expired token"}
+        )
 
 # In-memory fallback / initial tasks definition for reference
 INITIAL_TASKS: List[Dict[str, Any]] = [
