@@ -97,6 +97,26 @@ def login(creds: AuthCredentials):
             content={"error": "Invalid login credentials"}
         )
 
+@app.get("/public/info", summary="Public information endpoint")
+def public_info():
+    return {"message": "Welcome stranger! This info is public."}
+
+@app.get("/protected/profile", summary="User profile (unverified token check)")
+def get_protected_profile_unverified(request: Request):
+    auth_header = request.headers.get("Authorization")
+    if not auth_header or not auth_header.startswith("Bearer "):
+        return JSONResponse(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            content={"error": "Access token required"}
+        )
+    token = auth_header.split(" ", 1)[1].strip()
+    if not token:
+        return JSONResponse(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            content={"error": "Access token required"}
+        )
+    return {"message": "Token presented", "token": token}
+
 # In-memory fallback / initial tasks definition for reference
 INITIAL_TASKS: List[Dict[str, Any]] = [
     {"id": 1, "title": "Buy milk", "done": False},

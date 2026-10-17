@@ -96,3 +96,30 @@ def test_login_invalid_credentials(monkeypatch):
     response = client.post("/auth/login", json={"email": "wrong@example.com", "password": "wrongpassword"})
     assert response.status_code == 401
     assert response.json() == {"error": "Invalid login credentials"}
+
+def test_public_info():
+    response = client.get("/public/info")
+    assert response.status_code == 200
+    assert response.json() == {"message": "Welcome stranger! This info is public."}
+
+def test_protected_profile_unverified_missing_token():
+    # No header
+    res1 = client.get("/protected/profile")
+    assert res1.status_code == 401
+    assert res1.json() == {"error": "Access token required"}
+
+    # Malformed header
+    res2 = client.get("/protected/profile", headers={"Authorization": "Basic dGVzdDp0ZXN0"})
+    assert res2.status_code == 401
+    assert res2.json() == {"error": "Access token required"}
+
+    # Empty Bearer
+    res3 = client.get("/protected/profile", headers={"Authorization": "Bearer "})
+    assert res3.status_code == 401
+    assert res3.json() == {"error": "Access token required"}
+
+def test_protected_profile_unverified_token_present():
+    res = client.get("/protected/profile", headers={"Authorization": "Bearer dummy_token_abc"})
+    assert res.status_code == 200
+    assert res.json()["token"] == "dummy_token_abc"
+
