@@ -7,3 +7,5 @@ __pycache__/
 tasks.db
 *.db
 .DS_Store
+cache/
+scraper/cache/

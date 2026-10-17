@@ -1,0 +1,6 @@
+# Scraper cache and scratch
+cache/
+*.pyc
+__pycache__/
+.pytest_cache/
+.DS_Store
