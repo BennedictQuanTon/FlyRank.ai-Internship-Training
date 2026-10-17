@@ -148,3 +148,49 @@ Sample output record:
 1. **API First:** Always use an official REST/GraphQL API when provided by the platform.
 2. **Never Bypass Access Controls:** Never attempt to circumvent authentication gates, paywalls, CAPTCHAs, or IP bans.
 3. **Minimize Footprint:** Collect only the exact fields required for the business problem; respect bandwidth by aggressively caching during development.
+
+---
+
+## 🤖 9. Bonus Stage: The AI Rematch (AI vs Me)
+
+### 1. Specification Prompt Provided to the AI
+> *"Build a Python web scraping pipeline using requests and BeautifulSoup for Books to Scrape (https://books.toscrape.com).*
+> *Requirements:*
+> *1. Crawl exactly the first 3 catalogue pages following pagination.*
+> *2. Extract all 60 book detail pages collecting title, canonical product URL, raw price text, numeric price in GBP, availability, rating, and description.*
+> *3. Cache all HTML pages locally so repeated runs do not hit the live site.*
+> *4. Enforce polite crawling with custom User-Agent, 5s timeout, and 500ms delay between live requests.*
+> *5. Validate records against a Pydantic schema; set aside invalid records in errors.json.*
+> *6. Store clean records in output/books.json with strict idempotency (rerun never creates duplicates).*
+> *7. Isolate page failures so broken URLs do not crash the crawl, and write an honest output/run-report.json with run metrics."*
+
+The raw AI-generated version is quarantined in [`ai-version/main.py`](ai-version/main.py).
+
+### 2. Checkpoint Comparison
+
+| Verification Checkpoint | Hand-Built Pipeline | AI-Generated Version |
+| :--- | :--- | :--- |
+| **Discovers 60 unique URLs** | ✅ Follows dynamic `li.next a` to 3 pages (60 books) | ⚠️ Hardcoded `range(1, 4)` page loop |
+| **URL Normalization** | ✅ `urllib.parse.urljoin` handles relative paths | ❌ Crude `.replace('../', '')` string manipulation |
+| **Encoding & Currency** | ✅ Explicit `utf-8` decoding (`£51.77`) | ❌ Default ASCII decoding results in mojibake `Â£` |
+| **Missing Description** | ✅ Gracefully returns `null` | ❌ Crashes with `AttributeError: NoneType` |
+| **Local Disk Cache** | ✅ `cache/` checked first; 63 hits in $<0.3\text{s}$ | ❌ No caching; repeats 63 HTTP requests on every run |
+| **Idempotent Storage** | ✅ Exactly 60 records on 1st run and reruns | ❌ Blind array append; creates duplicates on reruns |
+| **Fault Tolerance & Report** | ✅ Survives fake 404; logs to `run-report.json` | ❌ Bare try-catch; no execution metrics reported |
+
+### 3. Concrete Differences & Architectural Analysis (`git diff --no-index`)
+
+1. **What did the AI do better — and do you understand that code?**
+   * The AI used concise list comprehensions and compact soup selectors. It is fast to skim through in under 50 lines. However, that brevity came at the expense of defensive engineering.
+2. **What did it get wrong or silently skip?**
+   * **URL Joining:** Gluing strings manually (`BASE_URL + rel_link.replace('../', '')`) is fragile and breaks if directory depth changes. `urljoin` is the web standard.
+   * **Encoding Neglect:** The AI did not set `response.encoding = 'utf-8'`, causing the British Pound symbol to corrupt into `Â£51.77`.
+   * **Schema & Missing Values:** The AI did not use Pydantic. On books with no description, `find_next_sibling('p')` raised an unhandled `AttributeError`, discarding records entirely instead of storing `null`.
+   * **Zero Provenance & Idempotency:** The AI omitted `source_page` and `fetched_at` timestamps, and lacked keyed deduplication to ensure reruns produce exactly 60 records.
+3. **What did your prompt forget to say?**
+   * The prompt forgot to specify character encoding (`utf-8`), the exact structure of cache filenames, and the specific schema for `run-report.json`. The AI silently skipped caching and run reporting altogether.
+
+### 4. Rematch & Prompt Refinement
+* **Refined Prompt:** *"Use urllib.parse.urljoin for all relative links. Explicitly decode responses as utf-8. Handle missing descriptions safely with None. Cache every HTML response using URL slugs. Key output records by canonical URL to guarantee idempotency."*
+* **Outcome:** With these precise constraints, the regenerated AI scraper eliminated character corruption, handled missing descriptions safely, and respected local disk caching.
+
