@@ -1,6 +1,6 @@
 import os
 from contextlib import asynccontextmanager
-from fastapi import FastAPI, HTTPException, status, Query, Request
+from fastapi import FastAPI, HTTPException, status, Query, Request, Depends, Response
 from fastapi.responses import JSONResponse
 from fastapi.exceptions import RequestValidationError
 from pydantic import BaseModel, Field, field_validator
@@ -20,6 +20,20 @@ app = FastAPI(
     description="A simple CRUD API for managing a To-Do list backed by PostgreSQL in Docker with Supabase Auth.",
     lifespan=lifespan
 )
+
+@app.exception_handler(HTTPException)
+async def custom_http_exception_handler(request: Request, exc: HTTPException):
+    if isinstance(exc.detail, dict) and "error" in exc.detail:
+        return JSONResponse(
+            status_code=exc.status_code,
+            content=exc.detail,
+            headers=exc.headers
+        )
+    return JSONResponse(
+        status_code=exc.status_code,
+        content={"detail": exc.detail},
+        headers=exc.headers
+    )
 
 @app.exception_handler(RequestValidationError)
 async def validation_exception_handler(request: Request, exc: RequestValidationError):
@@ -101,38 +115,30 @@ def login(creds: AuthCredentials):
 def public_info():
     return {"message": "Welcome stranger! This info is public."}
 
-@app.get("/protected/profile", summary="User profile (verified token)")
-def get_protected_profile(request: Request):
-    auth_header = request.headers.get("Authorization")
-    if not auth_header or not auth_header.startswith("Bearer "):
-        return JSONResponse(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            content={"error": "Access token required"}
-        )
-    token = auth_header.split(" ", 1)[1].strip()
-    if not token:
-        return JSONResponse(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            content={"error": "Access token required"}
-        )
+@app.get("/protected/profile", summary="User profile (protected)")
+def get_protected_profile(current_user: Dict[str, Any] = Depends(auth.get_current_user)):
+    return {
+        "id": current_user["id"],
+        "email": current_user["email"],
+        "created_at": current_user["created_at"]
+    }
+
+@app.get("/protected/dashboard", summary="User dashboard (protected)")
+def get_protected_dashboard(current_user: Dict[str, Any] = Depends(auth.get_current_user)):
+    return {
+        "message": f"Welcome to your dashboard, {current_user['email']}!",
+        "user_id": current_user["id"],
+        "status": "authenticated"
+    }
+
+@app.post("/auth/logout", status_code=status.HTTP_204_NO_CONTENT, summary="Log out current user")
+def logout(current_user: Dict[str, Any] = Depends(auth.get_current_user)):
     try:
         client = auth.get_supabase()
-        res = client.auth.get_user(token)
-        if not res or not res.user:
-            return JSONResponse(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                content={"error": "Invalid or expired token"}
-            )
-        return {
-            "id": str(res.user.id),
-            "email": res.user.email,
-            "created_at": str(res.user.created_at) if res.user.created_at else None
-        }
+        client.auth.sign_out()
     except Exception:
-        return JSONResponse(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            content={"error": "Invalid or expired token"}
-        )
+        pass
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 # In-memory fallback / initial tasks definition for reference
 INITIAL_TASKS: List[Dict[str, Any]] = [
