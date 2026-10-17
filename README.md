@@ -5,6 +5,7 @@
 > - **Week 4 (Pick the Stack & Empty but Live):** [`WEEK_04_AI_FLUENCY_SUBMISSION.md`](WEEK_04_AI_FLUENCY_SUBMISSION.md) | [`FL_04_WORKFLOW_PIPELINE.md`](FL_04_WORKFLOW_PIPELINE.md)
 > - **Week 5 (The Polite Scraper):** [`scraper/`](scraper/) | `output/books.json`
 > - **Week 6 (Explain It Like You Built It):** [`EXPLAIN_IT_LIKE_YOU_BUILT_IT.md`](EXPLAIN_IT_LIKE_YOU_BUILT_IT.md) | [`WEEK_06_AI_FLUENCY_SUBMISSION.md`](WEEK_06_AI_FLUENCY_SUBMISSION.md)
+> - **Capstone (Agent Design Doc):** [`CAPSTONE_AGENT_SPEC.md`](CAPSTONE_AGENT_SPEC.md)
 > - **Live Portfolio Site:** [https://bennedictquanton.github.io/todo-crud-api/](https://bennedictquanton.github.io/todo-crud-api/)
 
 A secure, production-grade RESTful API built with **Python 3.10+**, **FastAPI**, and **Supabase Auth** as the Identity Provider (IdP). This system implements end-to-end user authentication (Sign Up, Log In, Log Out), token issuance, JSON Web Token (JWT) verification, and reusable dependency-based route protection with interactive Swagger UI Bearer authorization.
